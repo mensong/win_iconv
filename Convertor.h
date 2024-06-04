@@ -31,12 +31,12 @@ namespace GL
 	//UTF8×ªansi
 	bool Utf82Ansi(std::string& out, const std::string& in, const char* locale = "");
 
-	bool StrToHex(std::string& out, const std::string& in);
+	//×Ö·û´®×ªhex×Ö·û´®
+	bool Str2Hex(std::string& out, const std::string& in);
+	bool Str2Hex(std::wstring& out, const std::wstring& in);
 
-	bool HexToStr(std::string& out, const std::string& in);
-
-	bool StrToHex(std::wstring& out, const std::wstring& in);
-
-	bool HexToStr(std::wstring& out, const std::wstring& in);
+	//hex×Ö·û´®×ª×Ö·û´®
+	bool Hex2Str(std::string& out, const std::string& in);
+	bool Hex2Str(std::wstring& out, const std::wstring& in);
 
 }

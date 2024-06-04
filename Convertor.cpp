@@ -209,7 +209,7 @@ bool Utf82Ansi(std::string& out, const std::string& in, const char* locale/* = "
 	return Unicode2Ansi(out, ws.c_str(), locale);
 }
 
-bool StrToHex(std::string& out, const std::string& in)
+bool Str2Hex(std::string& out, const std::string& in)
 {
 	//初始化
 	int iLenth = strlen(in.c_str());
@@ -232,7 +232,7 @@ bool StrToHex(std::string& out, const std::string& in)
 	return true;
 }
 
-bool HexToStr(std::string& out, const std::string& in)
+bool Hex2Str(std::string& out, const std::string& in)
 {
 	int iLenth = strlen(in.c_str());
 	char *cArrTemp = new char[iLenth + 1];
@@ -252,22 +252,22 @@ bool HexToStr(std::string& out, const std::string& in)
 	return true;
 }
 
-bool StrToHex(std::wstring& out, const std::wstring& in)
+bool Str2Hex(std::wstring& out, const std::wstring& in)
 {
 	std::string ansi;
 	if (!Unicode2Ansi(ansi, in))
 		return false;
-	if (!StrToHex(ansi, ansi))
+	if (!Str2Hex(ansi, ansi))
 		return false;
 	return Ansi2Unicode(out, ansi);
 }
 
-bool HexToStr(std::wstring& out, const std::wstring& in)
+bool Hex2Str(std::wstring& out, const std::wstring& in)
 {
 	std::string ansi;
 	if (!Unicode2Ansi(ansi, in))
 		return false;
-	if (!HexToStr(ansi, ansi))
+	if (!Hex2Str(ansi, ansi))
 		return false;
 	return Ansi2Unicode(out, ansi);
 }
