@@ -11,7 +11,7 @@ namespace GL
 	// pIn : 输入
 	// tocode : 目标编码(查看win_iconv.c文件)
 	// fromcode : 源编码(查看win_iconv.c文件)
-	bool Convert(std::string& out, const std::string& in, const char* tocode, const char* fromcode);
+	bool ConvertCharset(std::string& out, const std::string& in, const char* tocode, const char* fromcode);
 
 	//unicode 转为 ansi
 	bool Unicode2Ansi(std::string &out, const std::wstring& in, const char* locale = "");

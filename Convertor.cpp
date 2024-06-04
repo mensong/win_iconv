@@ -9,7 +9,7 @@
 namespace GL
 {
 
-bool Convert(std::string &out, const std::string& in, const char *tocode, const char *fromcode)
+bool ConvertCharset(std::string &out, const std::string& in, const char *tocode, const char *fromcode)
 {
 	bool bRet = false;
 
@@ -179,14 +179,14 @@ bool Unicode2Utf8(std::string& out, const std::wstring& in, const char* locale/*
 {
 	if (!Unicode2Ansi(out, in, locale))
 		return false;
-	return Convert(out, out, "UTF-8", "GBK");
+	return ConvertCharset(out, out, "UTF-8", "GBK");
 }
 
 //UTF8 转 Unicode
 bool Utf82Unicode(std::wstring& out, const std::string& in, const char* locale/* = ""*/)
 {
 	std::string s;
-	if (!Convert(s, in, "GBK", "UTF-8"))
+	if (!ConvertCharset(s, in, "GBK", "UTF-8"))
 		return false;
 	if (!Ansi2Unicode(out, s, locale))
 		return false;
