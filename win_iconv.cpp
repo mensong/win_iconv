@@ -50,7 +50,7 @@ extern "C" {
 
 iconv_t iconv_open(const char *tocode, const char *fromcode);
 int iconv_close(iconv_t cd);
-size_t iconv(iconv_t cd, const char **inbuf, size_t *inbytesleft, char **outbuf, size_t *outbytesleft);
+size_t iconv(iconv_t cd, const char **inbuf, size_t *inbytesleft, char **outbuf, size_t *outbytesleft, int exact);
 
 #ifdef __cplusplus
 }
@@ -72,7 +72,7 @@ typedef struct rec_iconv_t rec_iconv_t;
 
 typedef iconv_t (*f_iconv_open)(const char *tocode, const char *fromcode);
 typedef int (*f_iconv_close)(iconv_t cd);
-typedef size_t (*f_iconv)(iconv_t cd, const char **inbuf, size_t *inbytesleft, char **outbuf, size_t *outbytesleft);
+typedef size_t (*f_iconv)(iconv_t cd, const char **inbuf, size_t *inbytesleft, char **outbuf, size_t *outbytesleft, int exact);
 typedef int* (*f_errno)(void);
 typedef int (*f_mbtowc)(csconv_t *cv, const uchar *buf, int bufsize, ushort *wbuf, int *wbufsize);
 typedef int (*f_wctomb)(csconv_t *cv, ushort *wbuf, int wbufsize, uchar *buf, int bufsize);
@@ -114,7 +114,7 @@ struct rec_iconv_t {
 
 static int win_iconv_open(rec_iconv_t *cd, const char *tocode, const char *fromcode);
 static int win_iconv_close(iconv_t cd);
-static size_t win_iconv(iconv_t cd, const char **inbuf, size_t *inbytesleft, char **outbuf, size_t *outbytesleft);
+static size_t win_iconv(iconv_t cd, const char **inbuf, size_t *inbytesleft, char **outbuf, size_t *outbytesleft, int exact);
 
 static int load_mlang();
 static int make_csconv(const char *name, csconv_t *cv);
@@ -749,10 +749,10 @@ iconv_close(iconv_t _cd)
 }
 
 size_t
-iconv(iconv_t _cd, const char **inbuf, size_t *inbytesleft, char **outbuf, size_t *outbytesleft)
+iconv(iconv_t _cd, const char **inbuf, size_t *inbytesleft, char **outbuf, size_t *outbytesleft, int exact)
 {
     rec_iconv_t *cd = (rec_iconv_t *)_cd;
-    size_t r = cd->iconv(cd->cd, inbuf, inbytesleft, outbuf, outbytesleft);
+    size_t r = cd->iconv(cd->cd, inbuf, inbytesleft, outbuf, outbytesleft, exact);
     errno = *(cd->_errno());
     return r;
 }
@@ -780,7 +780,7 @@ win_iconv_close(iconv_t cd)
 }
 
 static size_t
-win_iconv(iconv_t _cd, const char **inbuf, size_t *inbytesleft, char **outbuf, size_t *outbytesleft)
+win_iconv(iconv_t _cd, const char **inbuf, size_t *inbytesleft, char **outbuf, size_t *outbytesleft, int exact)
 {
     rec_iconv_t *cd = (rec_iconv_t *)_cd;
     ushort wbuf[MB_CHAR_MAX]; /* enough room for one character */
@@ -824,14 +824,18 @@ win_iconv(iconv_t _cd, const char **inbuf, size_t *inbytesleft, char **outbuf, s
         insize = cd->from.mbtowc(&cd->from, (const uchar *)*inbuf, *inbytesleft, wbuf, &wsize);
         if (insize == -1)
         {
-#if 0//Gergul 关闭精准转换
-            cd->from.mode = frommode;
-            return (size_t)(-1);
-#else
-			*inbuf += 1;
-			*inbytesleft -= 1;
-			continue;
-#endif
+			//Mensong 是否精准转换
+			if (exact)
+			{
+				cd->from.mode = frommode;
+				return (size_t)(-1);
+			}
+			else
+			{
+				*inbuf += 1;
+				*inbytesleft -= 1;
+				continue;
+			}
         }
 
         if (wsize == 0)
@@ -870,18 +874,22 @@ win_iconv(iconv_t _cd, const char **inbuf, size_t *inbytesleft, char **outbuf, s
         }
 
         outsize = cd->to.wctomb(&cd->to, wbuf, wsize, (uchar *)*outbuf, *outbytesleft);
-        if (outsize == -1)
-        {
-#if 0//Gergul 关闭精准转换
-            cd->from.mode = frommode;
-            cd->to.mode = tomode;
-            return (size_t)(-1);
-#else
-			*inbuf += 1;
-			*inbytesleft -= 1;
-			continue;
-#endif
-        }
+		if (outsize == -1)
+		{
+			//Mensong 是否精准转换
+			if (exact)
+			{
+				cd->from.mode = frommode;
+				cd->to.mode = tomode;
+				return (size_t)(-1);
+			}
+			else 
+            {
+				*inbuf += 1;
+				*inbytesleft -= 1;
+				continue;
+			}
+		}
 
         *inbuf += insize;
         *outbuf += outsize;
@@ -1998,7 +2006,7 @@ main(int argc, char **argv)
         pin = inbuf;
         pout = outbuf;
         outbytesleft = sizeof(outbuf);
-        r = iconv(cd, &pin, &inbytesleft, &pout, &outbytesleft);
+        r = iconv(cd, &pin, &inbytesleft, &pout, &outbytesleft, true);
         fwrite(outbuf, 1, sizeof(outbuf) - outbytesleft, stdout);
         if (r == (size_t)(-1) && errno != E2BIG && (errno != EINVAL || feof(in)))
         {
@@ -2010,7 +2018,7 @@ main(int argc, char **argv)
     }
     pout = outbuf;
     outbytesleft = sizeof(outbuf);
-    r = iconv(cd, NULL, NULL, &pout, &outbytesleft);
+    r = iconv(cd, NULL, NULL, &pout, &outbytesleft, true);
     fwrite(outbuf, 1, sizeof(outbuf) - outbytesleft, stdout);
     if (r == (size_t)(-1))
     {

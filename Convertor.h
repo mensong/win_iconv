@@ -2,8 +2,6 @@
 #include <string>
 #include "iconv.h"
 
-#define USE_WINDOWS 1
-
 namespace GL
 {
 	//转换函数
@@ -11,7 +9,9 @@ namespace GL
 	// pIn : 输入
 	// tocode : 目标编码(查看win_iconv.c文件)
 	// fromcode : 源编码(查看win_iconv.c文件)
-	bool ConvertCharset(std::string& out, const std::string& in, const char* tocode, const char* fromcode);
+	// exact : 是否精确转换，false=不能转换的字符将被忽略
+	bool ConvertCharset(std::string& out, const std::string& in, 
+		const char* fromcode, const char* tocode, bool exact = true);
 
 	//unicode 转为 ansi
 	bool Unicode2Ansi(std::string &out, const std::wstring& in, const char* locale = "");
